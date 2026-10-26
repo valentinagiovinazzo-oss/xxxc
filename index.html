@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Il Meccanismo del Lasciapassare</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f1e2c0;--gold:#d9b66b;--w1:#7a4a2a;--w2:#4b2a16;--w3:#2e180c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% 20%,#4a2417 0%,#2a120a 55%,#150805 100%);color:var(--ink);
+font-family:'Cinzel',Georgia,'Times New Roman',serif;display:flex;flex-direction:column;align-items:center;
+padding:20px 12px 28px;-webkit-user-select:none;user-select:none}
+h1{font-size:clamp(1.4rem,5.5vw,2.3rem);margin:6px 0 8px;text-align:center;color:var(--gold);letter-spacing:.06em;
+text-shadow:0 2px 0 #000,0 0 18px rgba(217,182,107,.25)}
+.sub{max-width:34em;text-align:center;font-family:Georgia,serif;font-style:italic;font-size:clamp(.95rem,3.4vw,1.15rem);
+line-height:1.45;margin:0 0 18px;color:#ecd9b0}
+.sub b{font-style:normal;font-family:'Cinzel',Georgia,serif;letter-spacing:.12em;color:var(--gold)}
+.frame{width:min(94vw,560px);padding:clamp(10px,3vw,18px);border-radius:14px;
+background:linear-gradient(145deg,#6a3f22,#3a1f0f 60%,#5a3519);
+box-shadow:0 18px 40px rgba(0,0,0,.65),inset 0 2px 2px rgba(255,200,140,.3),inset 0 -3px 6px rgba(0,0,0,.6),0 0 0 2px #1a0b04}
+.board{position:relative;width:100%;aspect-ratio:4/3;container-type:inline-size;touch-action:none;border-radius:8px;
+background:#1b0d06;box-shadow:inset 0 4px 14px #000,inset 0 0 0 2px #0c0502}
+.tile{position:absolute;width:25%;height:33.3333%;transition:left .16s ease,top .16s ease,transform .16s ease;cursor:grab;z-index:1}
+.tile.drag{transition:none;z-index:5;cursor:grabbing}
+.tile .t{position:absolute;inset:3%;border-radius:9px;display:flex;align-items:center;justify-content:center;
+font-weight:700;font-size:11cqw;color:#2a1408;
+background:repeating-linear-gradient(92deg,rgba(0,0,0,.07) 0 2px,rgba(255,220,170,.05) 2px 5px),linear-gradient(145deg,var(--w1),var(--w2) 70%,var(--w3));
+box-shadow:inset 0 2px 1px rgba(255,210,150,.4),inset 0 -3px 3px rgba(0,0,0,.55),inset 2px 0 2px rgba(255,200,140,.12),0 3px 5px rgba(0,0,0,.6);
+text-shadow:0 1px 0 rgba(255,215,160,.45),0 -1px 1px rgba(0,0,0,.8)}
+.t::before{content:"";position:absolute;inset:7%;border:1px solid rgba(0,0,0,.35);border-radius:6px;
+box-shadow:0 1px 0 rgba(255,210,150,.2)}
+.t span{position:relative;color:#1f0e05;filter:drop-shadow(0 1px 0 rgba(255,210,150,.4))}
+.board.ok .t{box-shadow:inset 0 2px 1px rgba(255,210,150,.5),inset 0 -3px 3px rgba(0,0,0,.5),0 0 14px rgba(217,182,107,.55)}
+.bar{display:flex;gap:18px;align-items:center;margin-top:20px}
+.moves{font-family:Georgia,serif;font-style:italic;color:#d8c295;min-width:6em;text-align:right}
+button{font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:1.05rem;letter-spacing:.1em;color:#2a1408;
+padding:12px 28px;border:0;border-radius:8px;cursor:pointer;
+background:linear-gradient(180deg,#e6c984,#b88d45 55%,#8e6428);
+box-shadow:0 4px 0 #4b2f10,0 8px 14px rgba(0,0,0,.55),inset 0 1px 1px rgba(255,255,255,.5);touch-action:manipulation}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #4b2f10,0 3px 6px rgba(0,0,0,.5)}
+.click{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%) scale(.6);font-size:clamp(2.4rem,12vw,5rem);font-weight:700;
+color:var(--gold);text-shadow:0 3px 0 #000,0 0 30px rgba(217,182,107,.8);opacity:0;pointer-events:none;z-index:20}
+.click.go{animation:clk .9s ease-out}
+@keyframes clk{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+.shake{animation:shk .35s}
+@keyframes shk{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+.ov{position:fixed;inset:0;background:rgba(10,4,2,.8);display:none;align-items:center;justify-content:center;padding:16px;z-index:30;overflow:auto}
+.ov.on{display:flex}
+.scroll{position:relative;max-width:520px;width:100%;padding:34px 26px 78px;border-radius:6px;color:#3b2410;text-align:center;
+font-family:Georgia,'Times New Roman',serif;line-height:1.5;
+background:radial-gradient(ellipse at 30% 20%,#f4e4b8,#e2c88c 70%,#c9a665);
+box-shadow:0 20px 50px #000,inset 0 0 40px rgba(120,70,20,.45);animation:pop .5s ease-out}
+@keyframes pop{from{opacity:0;transform:scale(.85) rotate(-1.5deg)}to{opacity:1;transform:none}}
+.scroll h2{font-family:'Cinzel',Georgia,serif;margin:0 0 10px;font-size:clamp(1.1rem,4.4vw,1.5rem);color:#5a1d10}
+.scroll p{margin:8px 0;font-size:clamp(.95rem,3.6vw,1.1rem)}
+.code{display:inline-block;margin:10px 0;padding:8px 22px;font-family:'Cinzel',Georgia,serif;font-weight:700;
+font-size:clamp(1.5rem,7vw,2.2rem);letter-spacing:.2em;color:#7a160c;border:2px double #7a160c;border-radius:4px;background:rgba(255,245,215,.5)}
+.small{font-style:italic;font-size:.92rem!important}
+.seal{position:absolute;right:26px;bottom:14px;width:78px;height:78px;border-radius:50%;
+background:radial-gradient(circle at 35% 30%,#e0412e,#a01408 55%,#5c0a03);
+box-shadow:0 5px 9px rgba(0,0,0,.55),inset 0 -4px 6px rgba(0,0,0,.4),inset 0 3px 4px rgba(255,150,120,.4);
+display:flex;align-items:center;justify-content:center;transform:rotate(-8deg)}
+.seal::before{content:"";position:absolute;inset:9px;border:2px solid rgba(60,5,0,.55);border-radius:50%}
+.seal i{font-style:normal;font-size:2rem;color:rgba(70,6,0,.8);text-shadow:0 1px 0 rgba(255,150,120,.4)}
+.scroll button{margin-top:6px;font-size:.95rem;padding:10px 20px}
+</style>
+</head>
+<body>
+<h1>Il Meccanismo del Lasciapassare</h1>
+<p class="sub">Fai scorrere le tessere di legno per ricomporre la parola d’ordine del sigillo: <b>CONFIRMATOS</b></p>
+<div class="frame"><div class="board" id="board"></div></div>
+<div class="bar"><button id="shuf">Rimescola</button><div class="moves" id="moves">Mosse: 0</div></div>
+<div class="click" id="click">Click!</div>
+<div class="ov" id="ov"><div class="scroll">
+<h2>Sigillo apposto con successo! Il lasciapassare per Roma è convalidato.</h2>
+<p>Hai sbloccato la <b>SECONDA PARTE</b> della parola in codice per fuggire dalla stanza:</p>
+<div class="code">[ TEDDIO ]</div>
+<p class="small">(Questa è la seconda parte della parola in codice che ci serve per proseguire l’avventura e lasciare Recanati!)</p>
+<button id="again">Rimescola</button>
+<div class="seal"><i>☩</i></div>
+</div></div>
+<script>
+(function(){
+var W="CONFIRMATOS",C=4,R=3,N=12,b=[],moves=0,locked=false,tiles=[];
+var board=document.getElementById('board'),mv=document.getElementById('moves'),ov=document.getElementById('ov');
+var ac=null;
+function snd(f,d,v,type){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+var o=ac.createOscillator(),g=ac.createGain();o.type=type||'square';o.frequency.value=f;
+g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);
+o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d);}catch(e){}}
+function solved(){for(var i=0;i<11;i++){if(b[i]<0||W[b[i]]!==W[i])return false;}return b[11]<0;}
+function nb(p){var r=[],x=p%C,y=(p/C)|0;if(x>0)r.push(p-1);if(x<C-1)r.push(p+1);if(y>0)r.push(p-C);if(y<R-1)r.push(p+C);return r;}
+function shuffle(){
+do{b=[];for(var i=0;i<11;i++)b.push(i);b.push(-1);
+var bl=11,prev=-1;
+for(var k=0;k<400;k++){var o=nb(bl).filter(function(q){return q!==prev;});
+var q=o[Math.floor(Math.random()*o.length)];b[bl]=b[q];b[q]=-1;prev=bl;bl=q;}
+}while(solved()||b[11]<0&&false);
+}
+function place(el,p){el.style.left=(p%C)*25+'%';el.style.top=((p/C)|0)*33.3333+'%';}
+function render(){tiles.forEach(function(el,id){place(el,b.indexOf(id));el.style.transform='';});}
+function build(){board.innerHTML='';tiles=[];
+for(var id=0;id<11;id++){var el=document.createElement('div');el.className='tile';el.dataset.id=id;
+el.innerHTML='<div class="t"><span>'+W[id]+'</span></div>';board.appendChild(el);tiles.push(el);}
+}
+function dirTo(p){var bp=b.indexOf(-1),px=p%C,py=(p/C)|0,bx=bp%C,by=(bp/C)|0;
+if(px===bx&&py!==by)return{x:0,y:by>py?1:-1,adj:Math.abs(by-py)===1};
+if(py===by&&px!==bx)return{x:bx>px?1:-1,y:0,adj:Math.abs(bx-px)===1};return null;}
+function move(p){var bp=b.indexOf(-1),d=dirTo(p);if(!d)return false;
+var step=d.x?d.x:d.y*C,cur=bp;
+while(cur!==p){var nx=cur-step;b[cur]=b[nx];cur=nx;}
+b[p]=-1;moves++;mv.textContent='Mosse: '+moves;snd(180,.07,.12);render();
+if(solved())win();return true;}
+function win(){locked=true;
+setTimeout(function(){snd(110,.12,.35);snd(70,.2,.3,'sawtooth');
+if(navigator.vibrate)navigator.vibrate(60);
+board.classList.add('ok');var c=document.getElementById('click');c.classList.remove('go');void c.offsetWidth;c.classList.add('go');
+board.parentNode.classList.add('shake');},180);
+setTimeout(function(){ov.classList.add('on');},1300);}
+function restart(){locked=false;moves=0;mv.textContent='Mosse: 0';board.classList.remove('ok');
+board.parentNode.classList.remove('shake');ov.classList.remove('on');shuffle();render();}
+var drag=null;
+board.addEventListener('pointerdown',function(e){
+var el=e.target.closest('.tile');if(!el||locked)return;
+var id=+el.dataset.id,p=b.indexOf(id),d=dirTo(p);
+drag={el:el,p:p,d:d,x:e.clientX,y:e.clientY,proj:0,moved:0};
+try{el.setPointerCapture(e.pointerId);}catch(_){}
+if(d&&d.adj)el.classList.add('drag');});
+board.addEventListener('pointermove',function(e){
+if(!drag)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+drag.moved=Math.max(drag.moved,Math.abs(dx),Math.abs(dy));
+var d=drag.d;if(!d)return;
+var cw=board.clientWidth/C,ch=board.clientHeight/R,lim=d.x?cw:ch;
+var pr=Math.max(0,Math.min(lim,dx*d.x+dy*d.y));drag.proj=pr;
+if(d.adj)drag.el.style.transform='translate('+(d.x*pr)+'px,'+(d.y*pr)+'px)';});
+function end(){
+if(!drag)return;var s=drag,cw=board.clientWidth/C;drag=null;
+s.el.classList.remove('drag');
+var tap=s.moved<8,pull=s.proj>cw*.3;
+if(s.d&&(tap||pull)){move(s.p);}else{s.el.style.transform='';}}
+board.addEventListener('pointerup',end);
+board.addEventListener('pointercancel',end);
+document.getElementById('shuf').addEventListener('click',restart);
+document.getElementById('again').addEventListener('click',restart);
+build();shuffle();render();
+})();
+</script>
+</body>
+</html>
